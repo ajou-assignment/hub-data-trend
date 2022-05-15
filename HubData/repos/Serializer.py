@@ -39,7 +39,7 @@ class CommitSerializer(serializers.Serializer):
     
     class Meta:
         model = Commit
-        field = [
+        fields = [
             'id',
             'sha',
             'repo',
@@ -60,7 +60,7 @@ class BranchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Branch
-        field = [
+        fields = [
             'id',
             'name',
             'repo',
@@ -80,7 +80,7 @@ class RepositorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Repository
-        field = [
+        fields = [
             'id',
             'name',
             'org',

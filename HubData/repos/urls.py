@@ -18,5 +18,6 @@ from repos import views
 
 urlpatterns = [
     path('', views.OrgsViews.as_view()),
-    path('<str:org>', views.OrgViews.as_view()),
+    path('<str:org>', views.ReposViews.as_view()),
+    path('<str:org>/<str:repo>/', views.RepoViews.as_view()),
 ]
