@@ -1,12 +1,11 @@
-from dataclasses import field
 from rest_framework import serializers
-from repos.models import Organization, Repository, Branch, Commit
+from repos.models import Organization, Repository, Branch, Commit, User
 
 
 NAME = 'name'
 
 
-class CommitSerializer(serializers.Serializer):
+class CommitSerializer(serializers.ModelSerializer):
     repo = serializers.SerializerMethodField()
     branch = serializers.SerializerMethodField()
     user = serializers.SerializerMethodField()
@@ -23,9 +22,10 @@ class CommitSerializer(serializers.Serializer):
         return foo.split('/')[-1]
 
     def get_user(self, obj: Commit):
-        foo: str = obj.email.__str__()
-
-        return foo.split('@')[0]
+        return {
+            'name': obj.user.name,
+            'email': obj.user.email,
+        }
 
     def get_stats(self, obj: Commit):
         additions = obj.additions
@@ -33,7 +33,7 @@ class CommitSerializer(serializers.Serializer):
         return {
             'additions' : additions,
             'deletions' : deletions,
-            'amount_of_changes' : abs(additions - deletions),
+            'amount_of_changes' : additions - deletions,
             'total_changes' : additions + deletions,
         }
     
@@ -45,10 +45,23 @@ class CommitSerializer(serializers.Serializer):
             'repo',
             'branch',
             'user',
-            'email',
             'date',
             'stats',
         ]
+"""
+{
+    "sha": "asdfasdfasdfasdfasdfsdf",
+    "name": "testname2",
+    "email": "test2@email.com",
+    "date": "2022-05-22T16:28",
+    "additions": 3,
+    "deletions": 3
+}
+"""
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
 class BranchSerializer(serializers.ModelSerializer):
     repo = serializers.SerializerMethodField()

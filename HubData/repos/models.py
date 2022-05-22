@@ -1,7 +1,7 @@
 from django.db import models
 
 
-REPO, BRANCH, COMMIT = 'repo', 'branch', 'commit'
+REPO, BRANCH, COMMIT, USER = 'repo', 'branch', 'commit', 'user'
 
 
 class Organization(models.Model):
@@ -28,12 +28,21 @@ class Branch(models.Model):
     def __str__(self) -> str:
         return f'{self.repo}/{self.name}'
 
+class User(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30, default="noname")
+    email = models.CharField(max_length=50, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
+
 class Commit(models.Model):
+    id = models.AutoField(primary_key=True)
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE, related_name=COMMIT)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name=COMMIT)
-    sha = models.CharField(max_length=50, unique=True)
+    sha = models.CharField(max_length=40, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name=USER)
     date = models.DateTimeField()
-    email = models.CharField(max_length=50)
     additions = models.IntegerField(default=0)
     deletions = models.IntegerField(default=0)
 
