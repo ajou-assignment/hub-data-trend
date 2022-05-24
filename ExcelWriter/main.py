@@ -1,5 +1,5 @@
 import argparse
-from xlsxwriter import Workbook
+from xlsxwriter import Workbook, workbook, worksheet
 import pandas as pd
 from public_method import (
     get_all_commits,
@@ -47,15 +47,42 @@ def dev_view_to_excel(writer: pd.ExcelWriter, *dfs: tuple[pd.DataFrame]) -> None
 def main(org: str, repo: str, since: str, until: str):
     raw_df: pd.DataFrame = get_all_commits(org, repo, since, until)
     writer = pd.ExcelWriter(path=f'{org}_{repo}_{since}_{until}.xlsx', engine='xlsxwriter')
+
     book: Workbook = writer.book
+    chartssheet = book.add_worksheet('charts')
 
     dev_view_to_excel(writer, *dev_view(raw_df))
-    df = raw_df.groupby(by=['branch', 'weeknum'])['sha'].count().reset_index()
-    df_pivot = df.pivot(index='weeknum', columns='branch', values='sha').fillna(0)
-    print(df_pivot)
+    cm_line_df = raw_df.groupby(by=['branch', 'weeknum'])['sha'].count().reset_index()
+    cm_line_pivot_df = cm_line_df.pivot(index='weeknum', columns='branch', values='sha').fillna(0)
+    cm_line_pivot_df.to_excel(writer, sheet_name='branch_cm')
+
+    aoc_line_df = raw_df.groupby(by=['branch', 'weeknum'])['amount_of_changes'].sum().reset_index()
+    aoc_line_pivot_df = aoc_line_df.pivot(index='weeknum', columns='branch', values='amount_of_changes').fillna(0)
+    aoc_line_pivot_df.to_excel(writer, sheet_name='branch_aoc')
+
+    cm_line_cht: workbook.ChartLine = book.add_chart({'type':'line'})
+    cm_line_cht.add_series({
+        'name': 'test',
+        'values': ['branch_cm', 1, 1, 6, 1], # col row col row
+        'categories': ['branch_cm', 1, 0, 6, 0],
+        'data_labels': {'value': True},
+        'marker'    : {
+            'type'   : 'square',
+            'size'   : 8,
+            'border' : {'color':'black'},
+            'fill' : {'color': 'red'},
+        },
+    })
+
+    chartssheet.insert_chart('A1', chart=cm_line_cht)
+
+    print(cm_line_pivot_df)
+    print(aoc_line_pivot_df)
 
     raw_df.to_excel(writer, sheet_name='raw_data')
     writer.close()
+
+
 
 main('ajou-assignment', 'seat-assignment', '2021-11-01', '2021-12-31')
 

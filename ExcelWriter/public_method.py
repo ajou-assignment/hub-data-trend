@@ -16,10 +16,10 @@ headers = {
 }
 server_auth = HTTPBasicAuth(SERVER_ID, SERVER_PW)
 
-
 def get_from_server(url: str) -> dict|list[dict]:
     res = requests.get(url=url, headers=headers, auth=server_auth)
-    res.raise_for_status()
+    try: res.raise_for_status()
+    except: print(url, headers, res.text)
     return res.json()
 
 def get_branches(org: str, repo: str) -> list[str]:
