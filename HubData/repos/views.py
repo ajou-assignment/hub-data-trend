@@ -99,7 +99,7 @@ class RepoViews(APIView):
         except: GeneralFailureResponse
 
         serializer = BranchSerializer(data=request.data)
-        if serializer.is_valid(): serializer.save(org=_org, repo=_repo)
+        if serializer.is_valid(): serializer.save(repo=_repo)
         return Response(serializer.data, status=SUCCESS[CREATE])
 
 class ReposViews(APIView):
@@ -120,8 +120,11 @@ class ReposViews(APIView):
         return Response(serializer.data, status=SUCCESS[GET])
     
     def post(self, request: Request, org: str):
-        try: _org = Organization.objects.get(name=org)
+        try: 
+            _org = Organization.objects.get(name=org)
+            _repo = self.queryset.filter(name=request.data['name'])
         except: GeneralFailureResponse
+        if len(_repo) > 1: return GeneralFailureResponse
         
         serializer = RepositorySerializer(data=request.data)
         if serializer.is_valid():

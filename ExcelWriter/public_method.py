@@ -22,6 +22,38 @@ def get_from_server(url: str) -> dict|list[dict]:
     except: print(url, headers, res.text)
     return res.json()
 
+def post_to_server(url: str, data: dict) -> dict:
+    res = requests.post(url=url, headers=headers, auth=server_auth, json=data)
+    try: res.raise_for_status()
+    except: 
+        print(url, headers, res.status_code)
+        if res.status_code == 500:
+            return
+        return res.json()
+
+def post_org(org: str):
+    url = f'{BASE_URL}/'
+    return post_to_server(url, {'name':org})
+
+def post_repo(org: str, repo: str):
+    url = f'{BASE_URL}/{org}'
+    return post_to_server(url, {'name':repo})
+
+def post_branch(org: str, repo: str, branch: str, create_at: str) -> dict:
+    url = f'{BASE_URL}/{org}/{repo}/'
+    return post_to_server(url, {'name':branch, 'create_at':create_at})
+
+def post_commit(org: str, repo: str, branch: str, sha: str, name: str, email: str, date: str, additions: str, deletions: str) -> dict:
+    url = f'{BASE_URL}/{org}/{repo}/commits/{branch}'
+    return post_to_server(url, {
+        "sha": sha,
+        "name": name,
+        "email": email,
+        "date": date,
+        "additions": additions,
+        "deletions": deletions,
+        })
+        
 def get_branches(org: str, repo: str) -> list[str]:
     url = f'{BASE_URL}/{org}/{repo}'
     return get_from_server(url)['branches']

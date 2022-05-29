@@ -1,5 +1,5 @@
-import argparse
-from xlsxwriter import Workbook, workbook, worksheet
+import argparse, random
+from xlsxwriter import Workbook, workbook
 import pandas as pd
 from public_method import (
     get_all_commits,
@@ -44,11 +44,38 @@ def dev_view_to_excel(writer: pd.ExcelWriter, *dfs: tuple[pd.DataFrame]) -> None
             df.to_excel(writer, 'developer', startrow=previous_df_rowlen, startcol=previous_df_collen)
 
 
+def make_line_chart(book: Workbook, df: pd.DataFrame, chartname: str, sheetname: str) -> workbook.ChartLine:
+    chart: workbook.ChartLine = book.add_chart({'type':'line'})
+    chart.set_title({'name':chartname})
+    chart.set_style(random.randint(1, 20))
+
+    row = df.shape[0]
+    branches = df.columns.to_list()[0:]
+    
+    for branch in branches:
+        chart.add_series({
+            'name': branch,
+            'values': [sheetname, 1, 1, row + 1, 1], # row col row col
+            'categories': [sheetname, 1, 0, row + 1, 0],
+            'data_labels': {'value': True},
+        })
+        """
+        'marker'    : {
+                'type'   : 'square',
+                'size'   : 8,
+                'border' : {'color':'black'},
+                'fill' : {'color': 'red'},
+            },
+        """
+
+    return chart
+
+
 def main(org: str, repo: str, since: str, until: str):
     raw_df: pd.DataFrame = get_all_commits(org, repo, since, until)
     writer = pd.ExcelWriter(path=f'{org}_{repo}_{since}_{until}.xlsx', engine='xlsxwriter')
-
     book: Workbook = writer.book
+    title = book.add_format({'bold': 1, 'font_size': 25})
     chartssheet = book.add_worksheet('charts')
 
     dev_view_to_excel(writer, *dev_view(raw_df))
@@ -60,31 +87,19 @@ def main(org: str, repo: str, since: str, until: str):
     aoc_line_pivot_df = aoc_line_df.pivot(index='weeknum', columns='branch', values='amount_of_changes').fillna(0)
     aoc_line_pivot_df.to_excel(writer, sheet_name='branch_aoc')
 
-    cm_line_cht: workbook.ChartLine = book.add_chart({'type':'line'})
-    cm_line_cht.add_series({
-        'name': 'test',
-        'values': ['branch_cm', 1, 1, 6, 1], # col row col row
-        'categories': ['branch_cm', 1, 0, 6, 0],
-        'data_labels': {'value': True},
-        'marker'    : {
-            'type'   : 'square',
-            'size'   : 8,
-            'border' : {'color':'black'},
-            'fill' : {'color': 'red'},
-        },
-    })
-
-    chartssheet.insert_chart('A1', chart=cm_line_cht)
-
-    print(cm_line_pivot_df)
-    print(aoc_line_pivot_df)
+    cm_line_cht: workbook.ChartLine = make_line_chart(book, cm_line_pivot_df, 'Commits', 'branch_cm')
+    aoc_line_cht: workbook.ChartLine = make_line_chart(book, cm_line_pivot_df, 'AmountOfChanges', 'branch_aoc')
+    
+    chartssheet.write('B3', f'{org}/{repo}', title)
+    chartssheet.insert_chart('C5', cm_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
+    chartssheet.insert_chart('C20', aoc_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
 
     raw_df.to_excel(writer, sheet_name='raw_data')
     writer.close()
 
 
-
-main('ajou-assignment', 'seat-assignment', '2021-11-01', '2021-12-31')
+main('facebook', 'react', '2021-06-01', '2022-04-30')
+#main('ajou-assignment', 'seat-assignment', '2021-11-01', '2021-12-31')
 
     
     
