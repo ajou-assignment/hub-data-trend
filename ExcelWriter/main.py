@@ -83,23 +83,45 @@ def main(org: str, repo: str, since: str, until: str):
     cm_line_pivot_df = cm_line_df.pivot(index='weeknum', columns='branch', values='sha').fillna(0)
     cm_line_pivot_df.to_excel(writer, sheet_name='branch_cm')
 
+    adds_line_df = raw_df.groupby(by=['branch', 'weeknum'])['additions'].sum().reset_index()
+    adds_line_pivot_df = adds_line_df.pivot(index='weeknum', columns='branch', values='additions').fillna(0)
+    adds_line_pivot_df.to_excel(writer, sheet_name='branch_adds')
+
+    dels_line_df = raw_df.groupby(by=['branch', 'weeknum'])['deletions'].sum().reset_index()
+    dels_line_pivot_df = dels_line_df.pivot(index='weeknum', columns='branch', values='deletions').fillna(0)
+    dels_line_pivot_df.to_excel(writer, sheet_name='branch_dels')
+
     aoc_line_df = raw_df.groupby(by=['branch', 'weeknum'])['amount_of_changes'].sum().reset_index()
     aoc_line_pivot_df = aoc_line_df.pivot(index='weeknum', columns='branch', values='amount_of_changes').fillna(0)
     aoc_line_pivot_df.to_excel(writer, sheet_name='branch_aoc')
 
+    tc_line_df = raw_df.groupby(by=['branch', 'weeknum'])['total_changes'].sum().reset_index()
+    tc_line_pivot_df = tc_line_df.pivot(index='weeknum', columns='branch', values='total_changes').fillna(0)
+    tc_line_pivot_df.to_excel(writer, sheet_name='branch_tc')
+
     cm_line_cht: workbook.ChartLine = make_line_chart(book, cm_line_pivot_df, 'Commits', 'branch_cm')
+    adds_line_cht: workbook.ChartLine = make_line_chart(book, adds_line_pivot_df, 'Additions', 'branch_adds')
+    dels_line_cht: workbook.ChartLine = make_line_chart(book, dels_line_pivot_df, 'Deletions', 'branch_dels')
     aoc_line_cht: workbook.ChartLine = make_line_chart(book, cm_line_pivot_df, 'AmountOfChanges', 'branch_aoc')
+    tc_line_cht: workbook.ChartLine = make_line_chart(book, tc_line_pivot_df, 'TotalChanges', 'branch_tc')
     
     chartssheet.write('B3', f'{org}/{repo}', title)
     chartssheet.insert_chart('C5', cm_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
-    chartssheet.insert_chart('C20', aoc_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
+    chartssheet.insert_chart('C20', adds_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
+    chartssheet.insert_chart('C35', dels_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
+    chartssheet.insert_chart('C50', aoc_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
+    chartssheet.insert_chart('C65', tc_line_cht, {'x_offset': 10, 'y_offset': 10, 'x_scale': 2})
 
     raw_df.to_excel(writer, sheet_name='raw_data')
     writer.close()
 
 
-main('facebook', 'react', '2021-06-01', '2022-04-30')
+#main('facebook', 'react', '2021-06-01', '2022-04-30')
 #main('ajou-assignment', 'seat-assignment', '2021-11-01', '2021-12-31')
 
     
     
+if __name__=='__main__':
+    args = parser.parse_args()    
+
+    main(args.org, args.repo, args.since, args.until)

@@ -43,8 +43,8 @@ class Commit(models.Model):
     sha = models.CharField(max_length=40, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name=USER)
     date = models.DateTimeField()
-    additions = models.IntegerField(default=0)
-    deletions = models.IntegerField(default=0)
+    additions = models.PositiveIntegerField(default=0)
+    deletions = models.PositiveIntegerField(default=0)
 
     def __str__(self) -> str:
         return self.sha
